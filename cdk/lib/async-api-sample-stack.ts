@@ -16,6 +16,14 @@ export class AsyncApiSampleStack extends cdk.Stack {
       versioned: false,
       // 検証環境で削除ができるように指定する
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      lifecycleRules: [
+        {
+          id: "DeleteExpiredData",
+          enabled: true,
+          prefix: "topic/",
+          expiration: cdk.Duration.days(1),
+        },
+      ],
     });
 
     const responseBucket = new s3.Bucket(this, "ResponseBucket", {
@@ -23,6 +31,14 @@ export class AsyncApiSampleStack extends cdk.Stack {
       versioned: false,
       // 検証環境で削除ができるように指定する
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      lifecycleRules: [
+        {
+          id: "DeleteExpiredData",
+          enabled: true,
+          prefix: "reponse/",
+          expiration: cdk.Duration.days(1),
+        },
+      ],
     });
 
     const subscriberFunction = new lambda.Function(this, "SubscriberFunction", {
