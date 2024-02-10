@@ -14,7 +14,7 @@ def handler(event, context):
         response = S3.get_object(Bucket=bucket, Key=key)
         data = response["Body"].read()
 
-        response_key = "reponse/" + key.split("/")[-1]
+        response_key = "response/" + key.split("/")[-1]
         S3.put_object(
             Body=data, Bucket="async-api-sample--response-bucket", Key=response_key)
     return {
