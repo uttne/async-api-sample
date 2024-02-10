@@ -46,6 +46,8 @@ export class AsyncApiSampleStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: "main.handler",
       code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/subscriber")),
+      // 同時実行数を1に制限
+      reservedConcurrentExecutions: 1,
     });
 
     const writePolicy = new iam.PolicyStatement({
