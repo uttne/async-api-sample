@@ -6,6 +6,8 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as notifications from "aws-cdk-lib/aws-s3-notifications";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as path from "path";
+import * as apigw from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 
 export class AsyncApiSampleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -50,6 +52,15 @@ export class AsyncApiSampleStack extends cdk.Stack {
       reservedConcurrentExecutions: 1,
     });
 
+    const publisherFunction = new lambda.Function(this, "PublisherFunction", {
+      functionName: "async-api-sample--publisher-function",
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "main.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/publisher")),
+      // 同時実行数を1に制限
+      reservedConcurrentExecutions: 1,
+    });
+
     const writePolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ["s3:PutObject"],
@@ -65,6 +76,9 @@ export class AsyncApiSampleStack extends cdk.Stack {
     subscriberFunction.addToRolePolicy(readPolicy);
     subscriberFunction.addToRolePolicy(writePolicy);
 
+    publisherFunction.addToRolePolicy(readPolicy);
+    publisherFunction.addToRolePolicy(writePolicy);
+
     bucket.addEventNotification(
       s3.EventType.OBJECT_CREATED_PUT,
       new notifications.LambdaDestination(subscriberFunction)
@@ -76,5 +90,20 @@ export class AsyncApiSampleStack extends cdk.Stack {
       new notifications.LambdaDestination(subscriberFunction)
       // { prefix: "topic/", suffix: ".json" }
     );
+
+    const api = new apigw.HttpApi(this, "Api", {
+      apiName: "async-api-sample--api-gw",
+    });
+
+    const s3Integration = new HttpLambdaIntegration(
+      "S3LambdaIntegration",
+      publisherFunction
+    );
+
+    api.addRoutes({
+      path: "/s3",
+      methods: [apigw.HttpMethod.POST, apigw.HttpMethod.GET],
+      integration: s3Integration,
+    });
   }
 }
