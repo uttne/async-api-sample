@@ -17,3 +17,4 @@ npm install --save-dev @types/k6
 
 - [負荷テストを手軽にできるツール「k6」を試してみた](https://zenn.dev/rescuenow/articles/8349deb470470e)
 - [k6 で始める負荷テスト](https://zenn.dev/shorter/articles/e52c0047c4f0c5)
+- [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)
