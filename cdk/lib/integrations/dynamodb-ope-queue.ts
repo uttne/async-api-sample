@@ -28,7 +28,13 @@ export class DynamoDbOpeQueueIntegration {
     const opeQueueDynamoDb = new dynamodb.Table(scope, prefix + "QueueTable", {
       tableName: prefix + "queue-table",
       partitionKey: {
-        name: "key",
+        // chunk key
+        name: "ckey",
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        // sort key
+        name: "skey",
         type: dynamodb.AttributeType.STRING,
       },
       // オンデマンド
@@ -60,7 +66,8 @@ export class DynamoDbOpeQueueIntegration {
       ),
       environment: {
         DYNAMODB_TABLE_NAME: opeQueueDynamoDb.tableName,
-        DYNAMODB_KEY_NAME: "key",
+        DYNAMODB_CHUNK_KEY_NAME: "ckey",
+        DYNAMODB_SORT_KEY_NAME: "skey",
         DYNAMODB_TTL_ITEM_NAME: "expired",
         S3_BUKET_NAME: dbBucket.bucketName,
       },
