@@ -1,0 +1,21 @@
+{
+  "name": "tests",
+  "version": "1.0.0",
+  "description": "```powershell\r scoop install k6\r ```",
+  "main": "index.js",
+  "scripts": {
+    "test": "dotenv cross-var k6 run -e API_URL_BASE=$API_URL_BASE ./apigw/s3/test.js",
+    "run": "node run.mjs",
+    "test:s3": "node k6-run.mjs ./apigw/s3/test.js",
+    "test:dy-queue": "node k6-run.mjs ./apigw/dy-queue/test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@aws-sdk/client-apigatewayv2": "^3.523.0",
+    "@types/k6": "^0.49.0",
+    "@types/node": "^20.11.19",
+    "dotenv": "^16.4.4"
+  }
+}
