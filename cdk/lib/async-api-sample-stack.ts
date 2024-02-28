@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as apigw from "aws-cdk-lib/aws-apigatewayv2";
+import { DynamoDbOpeQueueIntegration } from "./integrations/dynamodb-ope-queue";
 // import { S3PubSubIntegration } from "./integrations/s3-pub-sub";
 
 export class AsyncApiSampleStack extends cdk.Stack {
@@ -22,5 +23,16 @@ export class AsyncApiSampleStack extends cdk.Stack {
     //   methods: [apigw.HttpMethod.POST, apigw.HttpMethod.GET],
     //   integration: s3PubSubIntegration.integration,
     // });
+
+    const dynamoDbOpeQueueIntegration = new DynamoDbOpeQueueIntegration(
+      this,
+      "async-api-sample--dynamodb-ope-queue--"
+    );
+
+    api.addRoutes({
+      path: "/dy-queue",
+      methods: [apigw.HttpMethod.POST, apigw.HttpMethod.GET],
+      integration: dynamoDbOpeQueueIntegration.integration,
+    });
   }
 }
