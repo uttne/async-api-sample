@@ -16,7 +16,7 @@ async function getApiAsync() {
   if (!api) {
     throw new Error(`Not found : '${API_NAME}'`);
   }
-  return api.ApiEndpoint;
+  return api;
 }
 
 function getEnv(apiEndpoint) {
