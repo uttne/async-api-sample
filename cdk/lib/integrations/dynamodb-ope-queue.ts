@@ -72,6 +72,7 @@ export class DynamoDbOpeQueueIntegration {
         S3_BUKET_NAME: dbBucket.bucketName,
       },
       layers: [layer],
+      memorySize: 256,
     });
 
     const writePolicy = new iam.PolicyStatement({
