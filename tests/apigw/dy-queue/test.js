@@ -41,7 +41,7 @@ export default function () {
     console.log(`failed. status: ${response.status}, body: ${response.body}`);
   }
   console.log(data + " : " + response.timings.duration.toString());
-  sleep(randomIntBetween(100, 500) / 1000);
+  sleep(randomIntBetween(100, 500) / 250);
 }
 
 export function teardown() {
