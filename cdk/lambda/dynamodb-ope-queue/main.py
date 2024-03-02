@@ -2,6 +2,7 @@ import json
 import re
 import os
 import boto3
+from botocore.exceptions import ClientError
 import time
 import ulid
 import boto3.dynamodb.conditions as cond
@@ -108,9 +109,15 @@ class Db(dict):
 
 class Ope(dict):
 
+    INSERT = "insert"
+    DROP = "drop"
+
     def __init__(self, src: dict | None = None):
         if (src):
             super().__init__(src)
+
+        if "v" not in self:
+            self["v"] = "1"
 
     @property
     def version(self) -> str:
@@ -137,22 +144,42 @@ class Ope(dict):
         self["d"] = value
 
 
-def new_ope_skey(ulid_text: str) -> str:
-    return DYNAMODB_SORT_KEY_OPE_SUFIX + ulid_text
+class Result(dict):
+
+    def __init__(self, src: dict | None = None):
+        if (src):
+            super().__init__(src)
+
+        if "status" not in self:
+            self["status"] = ""
+
+        if "message" not in self:
+            self["message"] = ""
+
+    @property
+    def status(self) -> str:
+        return self["status"]
+
+    @status.setter
+    def status(self, value: str) -> None:
+        self["status"] = value
+
+    @property
+    def message(self) -> str:
+        return self["message"]
+
+    @message.setter
+    def message(self, value: str) -> None:
+        self["message"] = value
 
 
-def new_sav_skey(ulid_text: str) -> str:
-    return DYNAMODB_SORT_KEY_SAV_SUFIX + ulid_text
-
-
-def put_ope(ckey_suffix: str, skey: str, data: str):
+def put_ope(ckey_suffix: str, skey: str, data: str, method: str = Ope.INSERT):
 
     ckey = "TEST" + ckey_suffix
     ttl = int(time.time()) + 60
 
     ope = Ope()
-    ope.version = "1"
-    ope.method = "insert"
+    ope.method = method
     ope.data = data
 
     response = TABLE.put_item(
@@ -163,8 +190,6 @@ def put_ope(ckey_suffix: str, skey: str, data: str):
             DYNAMODB_OPE_ITEM_NAME: ope,
         }
     )
-
-    print(response)
 
 
 def query(ckey_suffix: str, top_skey: str | None) -> list[dict]:
@@ -181,7 +206,6 @@ def query(ckey_suffix: str, top_skey: str | None) -> list[dict]:
         # Limit=5
     )
 
-    print(response)
     items = response["Items"]
 
     return items
@@ -209,63 +233,127 @@ def load(skey: str | None = None) -> Db:
 
         data_text = response["Body"].read().decode("utf-8")
         return Db(json.loads(data_text))
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "NoSuchKey":
+            return Db()
+        raise
     except:
-        return Db()
+        raise
+
+
+def cp(src_skey: str | None = None, dest_skey: str | None = None):
+
+    src_object_key = S3_DB_SNAPSHOT_FOLDER + src_skey + ".json" if src_skey else (
+        S3_DEFAULT_DB_KEY
+    )
+
+    dest_object_key = S3_DB_SNAPSHOT_FOLDER + dest_skey + ".json" if dest_skey else (
+        S3_DEFAULT_DB_KEY
+    )
+    src = {
+        "Bucket": S3_BUKET_NAME,
+        "Key": src_object_key
+    }
+    try:
+        S3.copy(src, S3_BUKET_NAME, dest_object_key)
+    except Exception as e:
+        print(
+            f"[Failed] S3 Copy src : {src_object_key}, dest : {dest_object_key}")
+        print(e)
+        raise
 
 # ------------------------------------------------------------------
 
 
-def post():
+def do(db: Db, ope: Ope) -> Result:
 
-    ulid_text = str(ulid.new())
+    if ope.method == Ope.INSERT:
+        db.data.append(ope.data)
+    elif ope.method == Ope.DROP:
+        db.data.clear()
+    res = Result()
+
+    res.status = "ok"
+    res.message = ""
+
+    return res
+
+
+def new_skey(top_skey: str | None = None) -> str:
+    if not top_skey:
+        return str(ulid.new())
+    while (skey := str(ulid.new())) <= top_skey:
+        pass
+    return skey
+
+
+def post_data(data: str, method: str):
 
     db = load()
 
-    skey = ulid_text
-    put_ope(ckey_suffix=DYNAMODB_SORT_KEY_OPE_SUFIX, skey=skey, data=skey)
+    print(f"[debug] : {data} : loaded db : {db.skey}")
+
+    current_skey = new_skey(db.skey)
+    print(f"[debug] : {data} : new skey : {current_skey}")
+
+    skey = current_skey
+    put_ope(ckey_suffix=DYNAMODB_SORT_KEY_OPE_SUFIX,
+            skey=skey, data=data, method=method)
+    print(f"[debug] : {data} : write ope : {current_skey}")
 
     items = query(ckey_suffix=DYNAMODB_SORT_KEY_OPE_SUFIX, top_skey=db.skey)
 
     items = sorted(items, key=lambda x: x[DYNAMODB_SORT_KEY_NAME])
+    print(
+        f"[debug] : {data} : query ope : {','.join([i[DYNAMODB_SORT_KEY_NAME] for i in items])}")
 
+    current_res = Result()
     for item in items:
         skey = item[DYNAMODB_SORT_KEY_NAME]
         ope = Ope(item[DYNAMODB_OPE_ITEM_NAME])
 
         db.skey = skey
-        db.data.append(ope.data)
+
+        res = do(db=db, ope=ope)
+
+        if skey == current_skey:
+            current_res = res
 
     save(db_obj=db, skey=skey)
+    print(f"[debug] : {data} : snap db : {skey}")
 
-    skey = ulid_text
     put_ope(ckey_suffix=DYNAMODB_SORT_KEY_SAV_SUFIX, skey=skey, data=skey)
+    print(f"[debug] : {data} : write db : {skey}")
 
     sav_items = query(ckey_suffix=DYNAMODB_SORT_KEY_SAV_SUFIX, top_skey=skey)
 
     last_sav_item = next(
         iter(sorted(sav_items, key=lambda x: x[DYNAMODB_SORT_KEY_NAME], reverse=True)), None)
-
+    print(
+        f"[debug] : {data} : query last db : {last_sav_item[DYNAMODB_SORT_KEY_NAME] if last_sav_item else None}")
     if not last_sav_item:
         save(db_obj=db)
-        return db
+        print(f"[debug] : {data} : save db : {skey}")
     else:
-        ope = Ope(last_sav_item[DYNAMODB_OPE_ITEM_NAME])
-        last_db = load(skey=ope.data)
-        save(db_obj=last_db)
-        return last_db
+        src_skey = last_sav_item[DYNAMODB_SORT_KEY_NAME]
+        cp(src_skey=src_skey)
+        print(f"[debug] : {data} : cp db : {src_skey}")
 
+    return current_res
+
+
+def get_db() -> dict:
+    return load()
 
 # ------------------------------------------------------------------
 
 
 def handler(event, context):
 
-    print("event")
-    print(event)
-    print("context")
-    print(context)
-
-    print(str(ulid.new()))
+    # print("event")
+    # print(event)
+    # print("context")
+    # print(context)
 
     path = convert_path(event)
     method = convert_method(event)
@@ -274,15 +362,22 @@ def handler(event, context):
 
     if (m := re.match(r".*[/]dy-queue", path)):
         if method == "GET":
-            return {
-                'statusCode': 200,
-                'body': 'Hello, CDK!'
-            }
-        elif method == "POST":
-            db = post()
+            db = get_db()
             return {
                 'statusCode': 200,
                 'body': json.dumps(db)
+            }
+        elif method == "POST":
+            res = post_data(data=body_data["data"], method=Ope.INSERT)
+            return {
+                'statusCode': 200,
+                'body': json.dumps(res)
+            }
+        elif method == "DELETE":
+            res = post_data(data="", method=Ope.DROP)
+            return {
+                'statusCode': 200,
+                'body': json.dumps(res)
             }
 
     return RESPONSE_404
