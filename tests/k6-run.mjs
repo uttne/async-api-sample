@@ -32,7 +32,7 @@ function getEnv(apiEndpoint) {
 async function main() {
   const api = await getApiAsync();
 
-  const env = getEnv(api.ApiEndpoint);
+  const env = getEnv(api.ApiEndpoint + "/dev");
 
   const args = process.argv.slice(2).join(" ");
 
