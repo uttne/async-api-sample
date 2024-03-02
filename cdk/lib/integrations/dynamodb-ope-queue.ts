@@ -87,8 +87,18 @@ export class DynamoDbOpeQueueIntegration {
       resources: [dbBucket.bucketArn + "/*"],
     });
 
+    // このポリシーがないと NoSuchKey を期待したときに AccessDenied が返ってくる場合がある
+    // https://qiita.com/snaka/items/e396010f67828f5fb6e6
+    // https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
+    const listPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ["s3:ListBucket"],
+      resources: [dbBucket.bucketArn],
+    });
+
     lambdaFunction.addToRolePolicy(readPolicy);
     lambdaFunction.addToRolePolicy(writePolicy);
+    lambdaFunction.addToRolePolicy(listPolicy);
 
     // Lambda に DynamoDB の読み書きアクセス権限を付与
     opeQueueDynamoDb.grantReadWriteData(lambdaFunction);
