@@ -123,3 +123,122 @@ sequenceDiagram
     lambda_sub ->> s3_res: topic2 の結果を保存
 
 ```
+
+
+## DynamoDB の役割
+
+- 操作のキューイング
+    - 操作の追加
+    - どこまでの操作を実行したかの管理
+- S3の削除管理
+
+### 操作のキューイング
+
+対象のオブジェクトに対してのパラレルな操作をキューイングしてシーケンシャルな操作に変換する。
+
+#### キューイングされるオペレーション
+| 列  | partition | sort | type    | 説明                                       | フォーマット                    |
+| --- | --------- | ---- | ------- | ------------------------------------------ | ------------------------------- |
+| cky | o         |      | string  | 操作対象のオブジェクトを判別するためのキー | `${system_name}:${object_path}` |
+| sky |           | o    | string  | 作成日時順にソート可能なユニークなキー     | `OP:a1:${ulid}`                 |
+| exp |           |      | numeric | TTL(現在時間 + 60s)                        | 整数                            |
+| ver |           |      | numeric | フォーマットバージョン                     | 1                               |
+| ope |           |      | string  | 操作内容                                   | JSON                            |
+
+exp の計算
+```python
+import time
+ttl = int(time.time()) + 60
+```
+```javascript
+const now = new Date();
+const ttl = Math.floor((new Date(now.getTime() + 60000)).getTime() / 1000);
+```
+
+`ope` の構造
+
+```typescript
+interface OpeSqliteV1{
+    _type: "sqlite";
+    ver: "1";
+    sqls: string[];
+}
+
+type Ope = OpeSqliteV1;
+```
+
+#### 最新の実行
+| 列  | partition | sort | type    | 説明                                                   | フォーマット                    |
+| --- | --------- | ---- | ------- | ------------------------------------------------------ | ------------------------------- |
+| cky | o         |      | string  | 操作対象のオブジェクトを判別するためのキー             | `${system_name}:${object_path}` |
+| sky |           | o    | string  | 固定値                                                 | `OP:a0:`                        |
+| ver |           |      | numeric | フォーマットバージョン                                 | 1                               |
+| cur |           |      | string  | 最新のオペレーションのskey                             | `${ulid}`                       |
+| prv |           |      | string  | 更新前のcur                                            | `${ulid}`                       |
+| has |           |      | string  | 操作の連続性が保証されることを確かめるためのハッシュ値 | `${ulid}`                       |
+
+`has` の計算
+
+以下のような計算を行う
+```python
+import zlib
+from functools import reduce
+
+prev_has = "00000000"
+
+ope_sky_list = [
+    "01HWTMXQ3Q6BDR6TXA12GEYD5S"
+    , "01HWTMY29K78V1S8M12GJ8C26C"
+]
+
+next_has = reduce(lambda prev, val: hex(zlib.crc32((prev + val).encode("ascii")))[2:],ope_sky_list, prev_has)
+
+```
+
+### S3 の削除管理
+
+不要になったオブジェクトの削除に失敗したときに後でそのオブジェクトを削除できるように記録する。
+
+| 列  | partition | sort | type    | 説明                                       | フォーマット                    |
+| --- | --------- | ---- | ------- | ------------------------------------------ | ------------------------------- |
+| cky | o         |      | string  | 操作対象のオブジェクトを判別するためのキー | `${system_name}:${object_path}` |
+| sky |           | o    | string  | 作成日時順にソート可能なユニークなキー     | `DE:${ulid}`                    |
+| ver |           |      | numeric | フォーマットバージョン                     | 1                               |
+| sts |           |      | string  | ステータスコード                           | 文字列                          |
+| err |           |      | string  | エラー内容                                 | 文字列                          |
+
+## 操作の適用フローチャート
+
+```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}} }%%
+flowchart TD
+    Start --> QueueOpe["`操作の書き込み
+    note: トランザクションなどを使い書き込み時点で順番の保証を行うかは未定。
+          エラーをなるべく返さないことを目標にした場合ここで書き込み保障をするのは難しい。`"]
+
+    QueueOpe --> ReadOpes["`操作の読み込み
+    note: 0.05s ディレイを前に入れて自分の操作より前に操作が挿入されるのを防ぐ`"]
+
+    ReadOpes --> JudgePrev{最新のデータが存在する}
+    JudgePrev -- Yes --> LoadObject[S3から最新のデータを取得する]
+    LoadObject --> DoAll[取得した全ての操作を実行]
+    JudgePrev -- No --> Init[初期化処理を実行]
+    Init --> DoAll[取得した全ての操作を実行]
+    DoAll --> UpdateCurrent[最新のデータに更新]
+    UpdateCurrent --> SaveObject[S3に更新したオブジェクトを保存]
+
+    SaveObject --> JudgeUpdateSuccess{"`最新のデータに更新できたか
+    更新ができなかった場合のパターンは以下
+    sky が古い場合
+    sky が同一でも hash が異なる場合
+    DynamoDB の書き込みエラー
+    `"}
+    JudgeUpdateSuccess -- Yes --> RemoveObject[更新元となったオブジェクトを削除]
+    JudgeUpdateSuccess -- No --> End
+    RemoveObject --> End
+```
+
+オブジェクトの削除をするため、別のリクエストでオブジェクトの読み込み時にエラーが発生する可能性がある  
+それをどう保証するか？
+
+sky と hash の両方が異なる場合、そのリクエストで実施した操作が全て正しいかわからない
