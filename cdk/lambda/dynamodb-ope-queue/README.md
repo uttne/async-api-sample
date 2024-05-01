@@ -8,5 +8,5 @@ pipreqs . --force
 
 ```powershell
 # python フォルダに書き出す必要あり
-pip install -r .\requirements.txt -t ./layer/python
+./new-layer.ps1
 ```
