@@ -1,0 +1,82 @@
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="421px" height="251px" viewBox="-0.5 -0.5 421 251" content="&lt;mxfile&gt;&lt;diagram id=&quot;RqEfRr-CDZraUXE83HXZ&quot; name=&quot;ページ1&quot;&gt;7Vhbb5swFP41vEaAQ0geA0m2SZ1UqQ/bHh1wwCpgZJwG9ut3DIZADGq6damqNjd8vnN8+3wuBAP5afmF4zz+zkKSGLYZlgbaGLZt2aYNF4lUDeKiVQNEnIbK6Aw80N9EgaZCjzQkxcBQMJYImg/BgGUZCcQAw5yz09DswJLhrDmOiAY8BDjR0R80FHGDLlbmGf9KaBSrmdFSKVLc2iqgiHHITj0IbQ3kc8ZE00pLnySSu5aWpt9uQtuti5NMXNVhodYhqnZvJIStKjFjGVy8WKQJSBY0SUnFT2ibqv1Ltmeuo8RN2dNtqp5wTzhNiSC8xTLBq5/tqFJohnJa8TxULVV96XKwZhNy5ZM8KKhgRx60Vki5DuYRUWZ2dwjgvITBJLwCE04SLOjTcHisvCjq7M5MQ0ORPUH8XCN+hGVrwPLLSf5LXlydl4arGxDTjvGEk6MaVWMq4uyYKzPCBSmNkaDH+9bcnNi1vhs10NxRXaouYTXy6RzsHRb3At0yzVdwDfQ8A8UjEUGsTjlnNBP1hI4HH1iC33wdMPUlMrOdEXAMc3XQ0s3gYo3NcAmOYa4OWrqZlNpVD8ExzHX0FV/2tkZ6Wxe94YM8dhQJzYjf1Q7J8YFlwmcJ4zX/CN47eXpexHFIyUC3c5dbc97TbSiHgSjL6ozKpQd5B5okvT4b0/Eh7JBXCM4eSU9zqF+gCXERk1AtR7o9hXp0h/ckuWcFVcPvmRAs7RmsExpJhWA5oFhJAaxKJol+Zpc7VJXWsltZeZycEhd5Q8eBlnIdHtSuXCrTMpJVfoZPxXzGSZNJvgVyPR6ITWtoleB0H+IuQY0EcT9Yn4lWpAfnYiQ2F68RmistNO+ardiLBObx9hxakWwZW8eA+4Glb2wXxmplLG2JrLfGamdsl8baalWOIZ0YGF7Dr6VFOhAjNL9QdVk7zr5X6bX70idSGoZyGu8UU0EeclwXgBMckzw5dszCzt/+6Zyq4QE8l0Tnr3BQbcp8yypiXVQR56ZFxP0sIu+5iCzMNULuy4qI7boW3NB/lCJSoKsT08Rd/RsUkKUWlg+o/vea0+Bd5/4Jit8i919x/3zr3G+bt0z+VxS/z9z/mfs/Ru6feHBx+9zfhvtl7uckZ1lB3nX2nyD5/2d/EM9PS2td75Ez2v4B&lt;/diagram&gt;&lt;/mxfile&gt;">
+    <defs>
+        <linearGradient x1="0%" y1="100%" x2="0%" y2="0%" id="mx-gradient-f78e04-1-d05c17-1-s-0">
+            <stop offset="0%" style="stop-color: rgb(208, 92, 23); stop-opacity: 1;"/>
+            <stop offset="100%" style="stop-color: rgb(247, 142, 4); stop-opacity: 1;"/>
+        </linearGradient>
+        <linearGradient x1="0%" y1="100%" x2="0%" y2="0%" id="mx-gradient-60a337-1-277116-1-s-0">
+            <stop offset="0%" style="stop-color: rgb(39, 113, 22); stop-opacity: 1;"/>
+            <stop offset="100%" style="stop-color: rgb(96, 163, 55); stop-opacity: 1;"/>
+        </linearGradient>
+    </defs>
+    <g>
+        <path d="M 330 115 L 96.15 178.34" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 91.08 179.71 L 96.92 174.5 L 96.15 178.34 L 98.75 181.26 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 90 30 L 323.84 90.62" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 328.92 91.94 L 321.26 93.57 L 323.84 90.62 L 323.02 86.8 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 330 70 L 390 70 L 390 130 L 330 130 Z" fill="url(#mx-gradient-f78e04-1-d05c17-1-s-0)" stroke="none" pointer-events="none"/>
+        <path d="M 349.74 122.29 L 339.1 122.29 L 350.87 97.68 L 356.2 108.66 Z M 351.64 95.33 C 351.49 95.04 351.19 94.85 350.87 94.85 L 350.86 94.85 C 350.53 94.85 350.23 95.04 350.09 95.34 L 336.96 122.77 C 336.84 123.04 336.85 123.35 337.01 123.6 C 337.17 123.85 337.44 124 337.74 124 L 350.29 124 C 350.62 124 350.92 123.81 351.06 123.51 L 357.93 109.02 C 358.04 108.79 358.04 108.52 357.93 108.28 Z M 381.45 122.29 L 370.87 122.29 L 353.91 86.77 C 353.77 86.48 353.46 86.29 353.13 86.29 L 346.21 86.29 L 346.22 77.71 L 359.78 77.71 L 376.67 113.22 C 376.81 113.52 377.11 113.71 377.44 113.71 L 381.45 113.71 Z M 382.31 112 L 377.99 112 L 361.1 76.49 C 360.96 76.19 360.66 76 360.32 76 L 345.36 76 C 344.89 76 344.5 76.38 344.5 76.86 L 344.49 87.14 C 344.49 87.37 344.58 87.59 344.75 87.75 C 344.91 87.91 345.12 88 345.35 88 L 352.59 88 L 369.56 123.51 C 369.7 123.81 370 124 370.33 124 L 382.31 124 C 382.78 124 383.16 123.62 383.16 123.14 L 383.16 112.86 C 383.16 112.38 382.78 112 382.31 112 Z" fill="#ffffff" stroke="none" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 150px; margin-left: 301px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                Lambda
+                                <br/>
+                                同時実行数 : 1
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="360" y="154" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    Lambda...
+                </text>
+            </switch>
+        </g>
+        <path d="M 30 0 L 90 0 L 90 60 L 30 60 Z" fill="url(#mx-gradient-60a337-1-277116-1-s-0)" stroke="none" pointer-events="none"/>
+        <path d="M 77.91 32.48 L 78.24 30.16 C 81.27 31.98 81.31 32.73 81.31 32.75 C 81.31 32.76 80.79 33.19 77.91 32.48 Z M 76.24 32.02 C 71 30.43 63.69 27.08 60.74 25.68 C 60.74 25.67 60.74 25.66 60.74 25.65 C 60.74 24.51 59.82 23.59 58.68 23.59 C 57.54 23.59 56.62 24.51 56.62 25.65 C 56.62 26.78 57.54 27.71 58.68 27.71 C 59.18 27.71 59.63 27.52 59.99 27.22 C 63.47 28.87 70.72 32.17 76 33.73 L 73.91 48.48 C 73.9 48.52 73.9 48.56 73.9 48.6 C 73.9 49.9 68.15 52.29 58.76 52.29 C 49.27 52.29 43.46 49.9 43.46 48.6 C 43.46 48.56 43.45 48.52 43.45 48.49 L 39.08 16.59 C 42.86 19.19 50.99 20.57 58.76 20.57 C 66.53 20.57 74.64 19.2 78.43 16.61 Z M 38.62 13.27 C 38.68 12.14 45.16 7.71 58.76 7.71 C 72.36 7.71 78.84 12.14 78.91 13.27 L 78.91 13.65 C 78.16 16.18 69.76 18.86 58.76 18.86 C 47.75 18.86 39.34 16.17 38.62 13.64 Z M 80.62 13.29 C 80.62 10.32 72.11 6 58.76 6 C 45.42 6 36.91 10.32 36.91 13.29 L 36.99 13.93 L 41.74 48.67 C 41.86 52.55 52.22 54 58.76 54 C 66.88 54 75.5 52.13 75.61 48.67 L 77.67 34.19 C 78.81 34.46 79.75 34.6 80.51 34.6 C 81.52 34.6 82.21 34.35 82.62 33.86 C 82.96 33.45 83.09 32.96 83 32.43 C 82.77 31.25 81.37 29.97 78.5 28.33 L 80.53 13.97 Z" fill="#ffffff" stroke="none" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 80px; margin-left: 1px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                S3 topic
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="60" y="84" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    S3 topic
+                </text>
+            </switch>
+        </g>
+        <path d="M 30 150 L 90 150 L 90 210 L 30 210 Z" fill="url(#mx-gradient-60a337-1-277116-1-s-0)" stroke="none" pointer-events="none"/>
+        <path d="M 77.91 182.48 L 78.24 180.16 C 81.27 181.98 81.31 182.73 81.31 182.75 C 81.31 182.76 80.79 183.19 77.91 182.48 Z M 76.24 182.02 C 71 180.43 63.69 177.08 60.74 175.68 C 60.74 175.67 60.74 175.66 60.74 175.65 C 60.74 174.51 59.82 173.59 58.68 173.59 C 57.54 173.59 56.62 174.51 56.62 175.65 C 56.62 176.78 57.54 177.71 58.68 177.71 C 59.18 177.71 59.63 177.52 59.99 177.22 C 63.47 178.87 70.72 182.17 76 183.73 L 73.91 198.48 C 73.9 198.52 73.9 198.56 73.9 198.6 C 73.9 199.9 68.15 202.29 58.76 202.29 C 49.27 202.29 43.46 199.9 43.46 198.6 C 43.46 198.56 43.45 198.52 43.45 198.49 L 39.08 166.59 C 42.86 169.19 50.99 170.57 58.76 170.57 C 66.53 170.57 74.64 169.2 78.43 166.61 Z M 38.62 163.27 C 38.68 162.14 45.16 157.71 58.76 157.71 C 72.36 157.71 78.84 162.14 78.91 163.27 L 78.91 163.65 C 78.16 166.18 69.76 168.86 58.76 168.86 C 47.75 168.86 39.34 166.17 38.62 163.64 Z M 80.62 163.29 C 80.62 160.32 72.11 156 58.76 156 C 45.42 156 36.91 160.32 36.91 163.29 L 36.99 163.93 L 41.74 198.67 C 41.86 202.55 52.22 204 58.76 204 C 66.88 204 75.5 202.13 75.61 198.67 L 77.67 184.19 C 78.81 184.46 79.75 184.6 80.51 184.6 C 81.52 184.6 82.21 184.35 82.62 183.86 C 82.96 183.45 83.09 182.96 83 182.43 C 82.77 181.25 81.37 179.97 78.5 178.33 L 80.53 163.97 Z" fill="#ffffff" stroke="none" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 230px; margin-left: 1px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                S3 reponse
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="60" y="234" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    S3 reponse
+                </text>
+            </switch>
+        </g>
+    </g>
+    <switch>
+        <g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/>
+        <a transform="translate(0,-5)" xlink:href="https://www.diagrams.net/doc/faq/svg-export-text-problems" target="_blank">
+            <text text-anchor="middle" font-size="10px" x="50%" y="100%">
+                Text is not SVG - cannot display
+            </text>
+        </a>
+    </switch>
+</svg>
