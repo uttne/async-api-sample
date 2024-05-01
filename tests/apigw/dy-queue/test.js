@@ -4,8 +4,8 @@ import { randomIntBetween } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 const API_URL_BASE = __ENV.API_URL_BASE;
 
 export const options = {
-  vus: 10,
-  duration: "5s",
+  vus: 10, //30,
+  duration: "60s",
   thresholds: {
     http_req_failed: ["rate<0.01"], // リクエストの失敗率は1%未満
     http_req_duration: ["p(95)<1000"], // 95%のリクエストで処理時間が200ms未満
@@ -41,12 +41,14 @@ export default function () {
     console.log(`failed. status: ${response.status}, body: ${response.body}`);
   }
   console.log(data + " : " + response.timings.duration.toString());
-  sleep(randomIntBetween(100, 500) / 250);
+  // sleep(randomIntBetween(50, 150) / 100);
+  sleep(randomIntBetween(500, 1500) / 1000);
 }
 
 export function teardown() {
   console.log("Teardown: テスト後のデータ確認");
 
+  sleep(2);
   const url = API_URL_BASE + "/dy-queue";
   const response = http.get(url);
 
@@ -54,8 +56,8 @@ export function teardown() {
     console.log("データ取得失敗");
   } else {
     const body = JSON.parse(response.body);
+    console.log(body.data.slice().sort());
     console.log(`skey : ${body.skey}`);
     console.log(`data.length : ${body.data.length}`);
-    console.log(body.data.slice().sort());
   }
 }
