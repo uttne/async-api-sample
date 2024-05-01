@@ -70,9 +70,11 @@ export class DynamoDbOpeQueueIntegration {
         DYNAMODB_SORT_KEY_NAME: "skey",
         DYNAMODB_TTL_ITEM_NAME: "expired",
         S3_BUKET_NAME: dbBucket.bucketName,
+        LOG_LEVEL: "INFO",
       },
       layers: [layer],
       memorySize: 256,
+      timeout: cdk.Duration.seconds(10),
     });
 
     const writePolicy = new iam.PolicyStatement({
