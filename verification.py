@@ -110,6 +110,7 @@ class Lambda:
             s3_cur = self.s3.load(self.step02_cur.cur)
             s3_prv = self.step02_cur.prv[0]
             if not s3_cur:
+                # TODO: cur が存在しないのにそれより古い prv は存在しない
                 s3_cur = self.s3.load(self.step02_cur.prv[0])
                 s3_prv = self.step02_cur.prv[1]
 
