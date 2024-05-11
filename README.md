@@ -124,62 +124,75 @@ sequenceDiagram
 
 ```
 
-
 ## DynamoDB の役割
 
 - 操作のキューイング
-    - 操作の追加
-    - どこまでの操作を実行したかの管理
-- S3の削除管理
+  - 操作の追加
+  - どこまでの操作を実行したかの管理
+- S3 の削除管理
 
 ### 操作のキューイング
 
 対象のオブジェクトに対してのパラレルな操作をキューイングしてシーケンシャルな操作に変換する。
 
 #### キューイングされるオペレーション
+
 | 列  | partition | sort | type    | 説明                                       | フォーマット                    |
 | --- | --------- | ---- | ------- | ------------------------------------------ | ------------------------------- |
 | cky | o         |      | string  | 操作対象のオブジェクトを判別するためのキー | `${system_name}:${object_path}` |
-| sky |           | o    | string  | 作成日時順にソート可能なユニークなキー     | `OP:a1:${ulid}`                 |
+| sky |           | o    | string  | 作成日時順にソート可能なユニークなキー     | `OP:a0:${ulid}`                 |
 | exp |           |      | numeric | TTL(現在時間 + 60s)                        | 整数                            |
 | ver |           |      | numeric | フォーマットバージョン                     | 1                               |
 | ope |           |      | string  | 操作内容                                   | JSON                            |
 
 exp の計算
+
 ```python
 import time
 ttl = int(time.time()) + 60
 ```
+
 ```javascript
 const now = new Date();
-const ttl = Math.floor((new Date(now.getTime() + 60000)).getTime() / 1000);
+const ttl = Math.floor(new Date(now.getTime() + 60000).getTime() / 1000);
 ```
 
 `ope` の構造
 
 ```typescript
-interface OpeSqliteV1{
-    _type: "sqlite";
-    ver: "1";
-    sqls: string[];
+interface OpeSqliteV1 {
+  _type: "sqlite";
+  ver: "1";
+  sqls: string[];
 }
 
 type Ope = OpeSqliteV1;
 ```
 
+#### 書き込まれた最新の操作
+
+| 列  | partition | sort | type    | 説明                                       | フォーマット                    |
+| --- | --------- | ---- | ------- | ------------------------------------------ | ------------------------------- |
+| cky | o         |      | string  | 操作対象のオブジェクトを判別するためのキー | `${system_name}:${object_path}` |
+| sky |           | o    | string  | 作成日時順にソート可能なユニークなキー     | `OP:Z0:`                        |
+| ver |           |      | numeric | フォーマットバージョン                     | 1                               |
+| lsk |           |      | string  | 操作の中で最も大きい sky                   | `${ulid}`                       |
+
 #### 最新の実行
-| 列  | partition | sort | type    | 説明                                                   | フォーマット                    |
-| --- | --------- | ---- | ------- | ------------------------------------------------------ | ------------------------------- |
-| cky | o         |      | string  | 操作対象のオブジェクトを判別するためのキー             | `${system_name}:${object_path}` |
-| sky |           | o    | string  | 固定値                                                 | `OP:a0:`                        |
-| ver |           |      | numeric | フォーマットバージョン                                 | 1                               |
-| cur |           |      | string  | 最新のオペレーションのskey                             | `${ulid}`                       |
-| prv |           |      | string  | 更新前のcur                                            | `${ulid}`                       |
-| has |           |      | string  | 操作の連続性が保証されることを確かめるためのハッシュ値 | `${ulid}`                       |
+
+| 列  | partition | sort | type     | 説明                                                   | フォーマット                    |
+| --- | --------- | ---- | -------- | ------------------------------------------------------ | ------------------------------- |
+| cky | o         |      | string   | 操作対象のオブジェクトを判別するためのキー             | `${system_name}:${object_path}` |
+| sky |           | o    | string   | 固定値                                                 | `OP:b0:`                        |
+| ver |           |      | numeric  | フォーマットバージョン                                 | 1                               |
+| cur |           |      | string   | 最新のオペレーションの skey                            | `${ulid}`                       |
+| prv |           |      | string[] | 更新前の cur のリスト                                  | `${ulid}`                       |
+| has |           |      | string   | 操作の連続性が保証されることを確かめるためのハッシュ値 | `${ulid}`                       |
 
 `has` の計算
 
 以下のような計算を行う
+
 ```python
 import zlib
 from functools import reduce
@@ -242,3 +255,140 @@ flowchart TD
 それをどう保証するか？
 
 sky と hash の両方が異なる場合、そのリクエストで実施した操作が全て正しいかわからない
+
+## 操作の書き込み
+
+```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}} }%%
+flowchart TD
+    Start --> New[操作の作成]
+    New --> Put[操作の書き込み]
+    Put -->Judge{書き込み成功}
+    Judge -- Yes --> End
+    Judge -- No --> New
+```
+
+書き込みでは sky が最新の値より大きい値でなければ保存できないようにトランザクションを使用して実行する
+
+snap01
+OpeA
+OpeB -> snap01.snap02(B)
+OpeC
+OpeD -> snap01.snap02(D)
+OpeE -> snap02(B).snap03(E)
+
+UpdateItem を使用した場合、ALL_OLD で更新前の値を取得することができる。
+そのため OpeB の snap02 書き込み後 OpeD の snap02 を書き込んだ場合、 OpeB の snap02 を取得することが可能。
+そのデータを使い、prev が同一の場合 OpeB の snap02 は削除を行う。
+
+### 同じスナップショットを取得して操作を適用した場合
+
+```mermaid
+sequenceDiagram
+    participant lambda1 as Lambda1(Op1)
+    participant lambda2 as Lambda2(Op2)
+    participant lambda3 as Lambda3(Op3)
+    participant dynamo as DynanoDB
+    participant s3 as S3
+
+    Note right of s3: snap00, snap01
+    Note right of dynamo: snap01
+
+    lambda1 ->> dynamo: put @ Op1
+    dynamo -->> lambda1: query @ snap01 + Op1
+    s3 -->> lambda1: get @ snap01
+
+    lambda2 ->> dynamo: put @ Op2
+    dynamo -->> lambda2: query @ snap01 + Op1 + Op2
+    s3 -->> lambda2: get @ snap01
+
+    lambda3 ->> dynamo: put @ Op3
+    dynamo -->> lambda3: query @ snap01 + Op1 + Op2 + Op3
+    s3 -->> lambda3: get @ snap01
+
+    lambda1 ->> s3: save @ snap02(snap01 + Op1)
+    Note right of s3: snap00, snap01 <br> snap02(snap01 + Op1)
+    lambda2 ->> s3: save @ snap02(snap01 + Op1 + Op2)
+    Note right of s3: snap00, snap01 <br> snap02(snap01 + Op1) <br> snap02(snap01 + Op1 + Op2)
+    lambda3 ->> s3: save @ snap02(snap01 + Op1 + Op2 + Op3)
+    Note right of s3: snap00, snap01 <br> snap02(snap01 + Op1) <br> snap02(snap01 + Op1 + Op2) <br> snap02(snap01 + Op1 + Op2 + Op3)
+
+    lambda1 ->> dynamo: update @ snap02(snap01 + Op1)
+    dynamo -->> lambda1: retrun @ snap01
+    Note right of dynamo: snap02(snap01 + Op1)
+    lambda1 ->> s3: delete @ snap00
+    Note right of s3: snap01 <br> snap02(snap01 + Op1) <br> snap02(snap01 + Op1 + Op2) <br> snap02(snap01 + Op1 + Op2 + Op3)
+
+    lambda2 ->> dynamo: update @ snap02(snap01 + Op1 + Op2)
+    dynamo -->> lambda2: retrun @ snap02(snap01 + Op1)
+    Note right of dynamo: snap02(snap01 + Op1 + Op2)
+    lambda2 ->> s3: delete @ snap02(snap01 + Op1)
+    Note right of s3: snap01 <br> snap02(snap01 + Op1 + Op2) <br> snap02(snap01 + Op1 + Op2 + Op3)
+
+    lambda3 ->> dynamo: update @ snap02(snap01 + Op1 + Op2 + Op3)
+    dynamo -->> lambda3: retrun @ snap02(snap01 + Op1 + Op2)
+    Note right of dynamo: snap02(snap01 + Op1 + Op2 + Op3)
+    lambda3 ->> s3: delete @ snap02(snap01 + Op1 + Op2)
+    Note right of s3: snap01 <br> snap02(snap01 + Op1 + Op2 + Op3)
+
+```
+
+### Op3 が snap02(Ope1) を取得した場合
+
+```mermaid
+sequenceDiagram
+    participant lambda1 as Lambda1(Op1)
+    participant lambda2 as Lambda2(Op2)
+    participant lambda3 as Lambda3(Op3)
+    participant dynamo as DynanoDB
+    participant s3 as S3
+
+    Note right of s3: snap00, snap01
+    Note right of dynamo: snap01
+
+    lambda1 -->> dynamo: put @ Op1
+    dynamo ->> lambda1: query @ snap01 + Op1
+    s3 -->> lambda1: get @ snap01
+
+    lambda2 -->> dynamo: put @ Op2
+    dynamo ->> lambda2: query @ snap01 + Op1 + Op2
+    s3 -->> lambda2: get @ snap01
+
+    lambda1 ->> s3: save @ snap02(snap01 + Op1)
+    Note right of s3: snap00, snap01 <br> snap02(snap01 + Op1)
+    lambda2 ->> s3: save @ snap02(snap01 + Op1 + Op2)
+    Note right of s3: snap00, snap01 <br> snap02(snap01 + Op1) <br> snap02(snap01 + Op1 + Op2)
+
+
+    lambda1 ->> dynamo: update @ snap02(snap01 + Op1)
+    dynamo -->> lambda1: retrun @ snap01
+    Note right of dynamo: snap02(snap01 + Op1)
+
+
+    lambda3->>dynamo: put @ Op3
+    dynamo->>lambda3: query @ snap02(snap01 + Op1) + Op2 + Op3
+    s3 -->> lambda3: get @ snap02(snap01 + Op1)
+
+    lambda3 ->> s3: save @ snap03(snap02(snap01 + Op1) + Op2 + Op3)
+    Note right of s3: snap00, snap01 <br> snap02(snap01 + Op1) <br> snap02(snap01 + Op1 + Op2) <br> snap03(snap02(snap01 + Op1) + Op2 + Op3)
+
+
+    lambda1 ->> s3: delete @ snap00
+    Note right of s3: snap01 <br> snap02(snap01 + Op1) <br> snap02(snap01 + Op1 + Op2) <br> snap03(snap02(snap01 + Op1) + Op2 + Op3)
+
+
+    lambda2 ->> dynamo: update @ snap02(snap01 + Op1 + Op2)
+    dynamo -->> lambda2: retrun @ snap02(snap01 + Op1)
+    Note right of dynamo: snap02(snap01 + Op1 + Op2)
+    lambda2 ->> s3: delete @ snap02(snap01 + Op1)
+    Note right of s3: snap01 <br> snap02(snap01 + Op1 + Op2) <br> snap03(snap02(snap01 + Op1) + Op2 + Op3)
+
+    lambda3 ->> dynamo: update @ snap03(snap02(snap01 + Op1) + Op2 + Op3)
+    dynamo -->> lambda3: retrun @ snap02(snap01 + Op1 + Op2)
+    Note right of dynamo: snap03(snap02(snap01 + Op1) + Op2 + Op3)
+    lambda3 ->> s3: delete @ snap01
+    Note right of s3: snap02(snap01 + Op1 + Op2) <br> snap03(snap02(snap01 + Op1) + Op2 + Op3)
+
+```
+
+これは snap02(snap01 + Op1 + Op2) が削除できなくなっている？
