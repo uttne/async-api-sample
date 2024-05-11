@@ -9,6 +9,10 @@ import os
 class Ope:
     sky: str
 
+@dataclass
+class Res:
+    sky: str
+    res: int
 
 @dataclass
 class Current:
@@ -41,11 +45,15 @@ class DynamoDb:
     def __init__(self) -> None:
         self.cur: Current | None = None
         self.opes: list[Ope | None] = [None for _ in range(20)]
+        self.res: list[list[Res]] = [None for _ in range(20)]
 
-    def put(self, ope: Ope) -> None:
+    def put_ope(self, ope: Ope) -> None:
         self.opes[int(ope.sky)] = ope
+    
+    def put_res(self, sky: str, res: list[Res]) -> None:
+        self.res[int(sky)] = res
 
-    def update(self, cur: Current) -> Current | None:
+    def update_cur(self, cur: Current) -> Current | None:
         prev = self.cur
 
         if prev and cur.cur <= prev.cur:
@@ -55,7 +63,7 @@ class DynamoDb:
         self.cur = cur
         return prev
 
-    def query(self) -> tuple[Current | None, list[Ope]]:
+    def query_ope_and_cur(self) -> tuple[Current | None, list[Ope]]:
         return (self.cur, [v for v in self.opes if v])
     
     def get_cur(self) -> Current | None:
@@ -75,7 +83,7 @@ class Lambda:
         self.err = ""
         self.next_step = self.step_put_ope
 
-        self.opes: list[Current | Ope] = None
+        self.opes: list[Ope] = None
         self.cur: Current | None = None
 
         self.s3_db: str | None = None
@@ -103,15 +111,13 @@ class Lambda:
 
     def next(self) -> bool:
 
-        if self.next_step == 0:
-            self.step_put_ope()
-        elif self.next_step == 1:
-            self.step_query_ope_and_cur()
+        while self.next_step:
+            self.next_step()
 
     def step_put_ope(self) -> None:
         """DynamoDB のキューに操作を書き込む"""
 
-        self.dynamoDb.put(self.ope)
+        self.dynamoDb.put_ope(self.ope)
 
         # 最新の操作完了状態と操作の一覧を取得する
         self.next_step = self.step_query_ope_and_cur
@@ -124,7 +130,7 @@ class Lambda:
               数ミリ秒で全体に書き込みが反映されているはずなので強い整合性のある読み込みは使用しない
               今回は検証なので1回で必要な操作がすべて読み込まれたと仮定する"""
 
-        cur, opes = self.dynamoDb.query()
+        cur, opes = self.dynamoDb.query_ope_and_cur()
 
         self.opes = opes
         self.cur = cur
@@ -157,6 +163,7 @@ class Lambda:
                 # 他の操作も行ったのでその結果を保存する
                 self.next_step = self.step_put_other_ope_result
             else:
+                # 操作を行ったので最新情報を更新する
                 self.next_step = self.step_update_cur
         else:
             # オブジェクトの取得ができなかったのでリトライ
@@ -176,8 +183,14 @@ class Lambda:
         return True
 
     def step_put_other_ope_result(self) -> None:
-        """自分以外の操作の結果を保存する"""
-        self.opes
+        """自分以外の操作の結果を保存する
+        note: 結果データは自分以外の操作の中でも最も大きなskyをソートキーとして保存する"""
+        res = [Res(o.sky,0) for o in self.opes if o.sky != self.ope.sky]
+        if res:
+            self.dynamoDb.put_res(res[-1].sky, res)
+        
+        # 結果を保存したので最新情報に更新する
+        self.next_step = self.step_update_cur
 
     def step_update_cur(self) -> None:
         """最新のデータの適用状況を更新する"""
@@ -217,7 +230,7 @@ class Lambda:
         else:
             prev = []
         cur = Current(self.ope.sky, prev)
-        self.step04_update_prev_cur = self.dynamoDb.update(cur)
+        self.step04_update_prev_cur = self.dynamoDb.update_cur(cur)
 
     def step06(self):
 
