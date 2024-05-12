@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 import time
 import sqlite3
 import os
+import copy
 
 
 @dataclass
@@ -17,7 +18,7 @@ class Res:
 @dataclass
 class Current:
     cur: str
-    prv: list[str]
+    obs: set[str]
 
 
 class S3:
@@ -53,14 +54,20 @@ class DynamoDb:
     def put_res(self, sky: str, res: list[Res]) -> None:
         self.res[int(sky)] = res
 
-    def update_cur(self, cur: Current) -> Current | None:
-        prev = self.cur
+    def update_cur(self, sky: str, remove_sky_list: list[str]) -> Current | None:
+        prev = copy.deepcopy(self.cur) if self.cur else None
 
-        if prev and cur.cur <= prev.cur:
+        if prev and sky <= prev.cur:
             # cur が古い場合は更新をしないようにする
             return None
 
-        self.cur = cur
+        if not self.cur:
+            self.cur = Current(sky,set([sky]))
+        else:
+            self.cur.cur = sky
+            for s in remove_sky_list:
+                self.cur.obs.discard(s)
+        
         return prev
 
     def query_ope_and_cur(self) -> tuple[Current | None, list[Ope]]:
@@ -92,6 +99,9 @@ class Lambda:
         self.step03_prv: str | None = None
 
         self.step04_update_prev_cur: Current | None = None
+        
+        self.update_result_cur: Current | None = None
+        self.remove_sky_list: list[str] = []
     
     @property
     def cur_sky(self) -> str | None:
@@ -108,6 +118,8 @@ class Lambda:
         self.step03_cur = None
         self.step03_prv = None
         self.step04_update_prev_cur = None
+        self.update_result_cur = None
+        self.remove_sky_list = []
 
     def next(self) -> bool:
 
@@ -194,8 +206,28 @@ class Lambda:
 
     def step_update_cur(self) -> None:
         """最新のデータの適用状況を更新する"""
-        pass
+        
+        last_ope = self.opes[-1]
+        self.remove_sky_list = list(self.cur.obs) if self.cur else []
+        
+        
+        self.update_result_cur = self.dynamoDb.update_cur(last_ope.sky, self.remove_sky_list)
+        
+        if self.update_result_cur:
+            # 保存が完了したのでアップデート前に保管されていた最新データに保管されていたオブジェクトデータを削除する
+            self.remove_sky_list = list(self.update_result_cur.obs)
+        else:
+            # アップデート失敗をしたので保存をしようとしたデータが最新でなかった
+            # そのためこのプロセスで保存したオブジェクトを削除する
+            self.remove_sky_list = [last_ope.sky]
+        
+        # オブジェクトの削除ステップに移動
+        self.next_step = self.step_remove_obj
+        
 
+    def step_remove_obj(self) -> None:
+        """不要なオブジェクトを削除する"""
+        pass
 
     
     def step_get_cur(self) -> None:

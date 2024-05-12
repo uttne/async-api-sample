@@ -183,7 +183,7 @@ type Ope = OpeSqliteV1;
 | 列        | partition | sort | type    | 説明                                                | フォーマット                                 |
 | --------- | --------- | ---- | ------- | --------------------------------------------------- | -------------------------------------------- |
 | cky       | o         |      | string  | 操作対象のオブジェクトを判別するためのキー          | `${system_name}:${object_path}`              |
-| sky       |           | o    | string  | 作成日時順にソート可能なユニークなキー              | `OP:c0:${sky}`                                     |
+| sky       |           | o    | string  | 作成日時順にソート可能なユニークなキー              | `OP:c0:${sky}`                               |
 | ver       |           |      | numeric | フォーマットバージョン                              | 1                                            |
 | res       |           |      | map     | 操作の結果データ, key: sky                          | map                                          |
 | res[].ste |           |      | numeric | 結果のステータスコード 0が正常                      | 整数                                         |
@@ -198,7 +198,7 @@ type Ope = OpeSqliteV1;
 | sky |           | o    | string   | 固定値                                                 | `OP:b0:`                        |
 | ver |           |      | numeric  | フォーマットバージョン                                 | 1                               |
 | cur |           |      | string   | 最新のオペレーションの skey                            | `${ulid}`                       |
-| prv |           |      | string[] | 更新前の cur のリスト                                  | `${ulid}`                       |
+| obs |           |      | set      | オブジェクトとして保存されている sky のセット          | `${ulid}`                       |
 | has |           |      | string   | 操作の連続性が保証されることを確かめるためのハッシュ値 | `${ulid}`                       |
 
 `has` の計算
